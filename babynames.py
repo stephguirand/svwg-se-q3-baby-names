@@ -30,10 +30,17 @@ Suggested milestones for incremental development:
  - Build the [year, 'name rank', ... ] list and print it
  - Fix main() to use the extracted_names list
 """
+__author__ = """
+stephguirand
+Help from demo, lessons and activities, youtube videos in canvas and
+own search on youtube,
+stack overflow, Tutors, Facilitators and talking about assignment
+in study group.
+"""
 
-import sys
-import re
 import argparse
+import re
+import sys
 
 
 def extract_names(filename):
@@ -44,8 +51,41 @@ def extract_names(filename):
     ['2006', 'Aaliyah 91', 'Aaron 57', 'Abagail 895', ...]
     """
     names = []
+    f = open(filename, 'rU')
+    text = f.read()
+
+    # Get the year
+    year_match = re.search(r'Popularity\sin\s(\d\d\d\d)', text)
+    if not year_match:
+        # did not find a year, exit with an error message
+        sys.stderr.write('unavailable year!\n')
+        sys.exit(1)
+    year = year_match.group(1)
+    names.append(year)
+
+    # extract all the data tuples with a findall()
+    tuples = re.findall(r'<td>(\d+)</td><td>(\w+)</td><td>(\w+)', text)
+    # print(tuples)
+
+    # store data into a dict using ea name as a key and that
+    # name's rank number as the value.
+    # (if the name is already in there, don't add it, since
+    # this new rank will be bigger than the previous rank)
+
+    names_in_group = {}
+    for group_tuple in tuples:
+        (group, boyname, girlname) = group_tuple  # unpack the tuple into 3vars
+        if boyname not in names_in_group:
+            names_in_group[boyname] = group
+        if girlname not in names_in_group:
+            names_in_group[girlname] = group
+
+    # get the names, sorted in the right order
+    sorted_names = sorted(names_in_group)
+    for name in sorted_names:
+        names.append(f"{name} {names_in_group[name]}")
     # +++your code here+++
-    return names
+    return(names)
 
 
 def create_parser():
@@ -62,7 +102,7 @@ def create_parser():
 
 
 def main(args):
-    # Create a command line parser object with parsing rules
+    """Create a command line parser object with parsing rules"""
     parser = create_parser()
     # Run the parser to collect command line arguments into a
     # NAMESPACE called 'ns'
@@ -83,6 +123,15 @@ def main(args):
     # or to write the list to a summary file (e.g. `baby1990.html.summary`).
 
     # +++your code here+++
+    for filename in file_list:
+        # print("writing for", filename)
+        names = extract_names(filename)
+        lines = '\n'.join(names)  # make lines out of the whole list
+        if create_summary:
+            with open(filename + '.summary', 'w') as f:
+                f.write(lines)
+        else:
+            print(lines)
 
 
 if __name__ == '__main__':
